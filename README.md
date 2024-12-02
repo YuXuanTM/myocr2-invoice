@@ -15,7 +15,7 @@ YOLOv10+PaddleOCR+Flask
 例如：<br>
  2.1 cpu环境<br>
   python -m pip install paddlepaddle==2.6.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/ <br>
- 2.1 gpu环境以英伟达显卡CUDA11.7为例 <br>
+ 2.2 gpu环境以英伟达显卡CUDA11.7为例 <br>
   python -m pip install paddlepaddle-gpu==2.6.1.post117 -f https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html -i https://pypi.tuna.tsinghua.edu.cn/simple
 3. pip install paddleocr -i https://pypi.tuna.tsinghua.edu.cn/simple
 4. python main.py
@@ -35,7 +35,7 @@ YOLOv10+PaddleOCR+Flask
 
 #### 说明
 
-若要商用请注意YOLOv10开源协议以及PaddleOCR开源协议，项目地址如下
-YOLOv10：https://github.com/THU-MIG/yolov10
+若要商用请注意YOLOv10开源协议以及PaddleOCR开源协议，项目地址如下<br>
+YOLOv10：https://github.com/THU-MIG/yolov10 <br>
 PaddleOCR：https://github.com/PaddlePaddle/PaddleOCR
 
