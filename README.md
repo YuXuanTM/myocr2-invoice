@@ -11,17 +11,18 @@ YOLOv10+PaddleOCR+Flask
 #### 安装教程
 
 1. pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-2. 安装PaddleOCR所需内容，参考https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html
-例如：
- 2.1 cpu环境
-  python -m pip install paddlepaddle==2.6.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
- 2.1 gpu环境以英伟达显卡CUDA11.7为例 
+2. 安装PaddleOCR所需内容，参考https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html <br>
+例如：<br>
+ 2.1 cpu环境<br>
+  python -m pip install paddlepaddle==2.6.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/ <br>
+ 2.1 gpu环境以英伟达显卡CUDA11.7为例 <br>
   python -m pip install paddlepaddle-gpu==2.6.1.post117 -f https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html -i https://pypi.tuna.tsinghua.edu.cn/simple
 3. pip install paddleocr -i https://pypi.tuna.tsinghua.edu.cn/simple
 4. python main.py
 启动成功发送地址测试http://127.0.0.1:5000/invoice_ocr
 
 #### 测试截图
+
 经测试GPU环境下平均三百多毫秒，CPU环境下一秒左右
 ![输入图片说明](https://foruda.gitee.com/images/1733117962971085706/7da738f8_5748498.png "GPU环境平均耗时")
 ![输入图片说明](https://foruda.gitee.com/images/1733118115493827803/c57188ac_5748498.png "CPU环境平均耗时")
