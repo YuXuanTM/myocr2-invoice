@@ -33,7 +33,7 @@ YOLOv10+PaddleOCR+Flask
 目前训练数据种类比较少，后续逐步完善。
 
 
-#### 说明
+#### 注意注意注意
 
 若要商用请注意YOLOv10开源协议以及PaddleOCR开源协议，项目地址如下<br>
 YOLOv10：https://github.com/THU-MIG/yolov10 <br>
