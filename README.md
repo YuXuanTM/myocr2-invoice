@@ -10,6 +10,8 @@ YOLOv10+PaddleOCR+Flask
 
 #### 安装教程
 
+Python3.9环境，建议使用Anaconda管理python环境
+
 1. pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 2. 安装PaddleOCR所需内容，参考https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html <br>
 例如：<br>
