@@ -1,13 +1,14 @@
 import cv2
 import re
 import numpy as np
-
-from ultralytics import YOLOv10
+import fitz
+import predict2
+import math
 from paddleocr import PaddleOCR
 from flask import Flask, request
 from PIL import Image
-import fitz
 from torchvision import transforms
+# from my_predict2 import start
 
 app = Flask(__name__)
 
@@ -15,8 +16,8 @@ ocr = PaddleOCR(
     rec=r'models/ch_PP-OCRv4_rec_infer',
     det=r'models/ch_PP-OCRv4_det_infer',
     use_gpu=True)
-model = YOLOv10(model=r'models/best.pt')
-types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf']
+
+types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf', 'application/ofd']
 FIXED_WIDTH = 1219
 
 # 图片预处理
@@ -62,7 +63,8 @@ def convert_coordinates(box, orig_size, new_size, paste_coords):
   return [x1_new, y1_new, x2_new, y2_new]
 
 def __get_img__(filename, file):
-  if filename.lower().endswith('.pdf'):
+  filename = filename.lower()
+  if filename.endswith('.pdf'):
     if isinstance(file, str):
       doc = fitz.open(file)
     else:
@@ -77,7 +79,10 @@ def __get_img__(filename, file):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
   else:
-    img = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.COLOR_BGR2RGB)
+    if isinstance(file, str):
+      img = cv2.imread(file)[:, :, ::-1]
+    else:
+      img = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.COLOR_BGR2RGB)
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
   return img
 
@@ -92,31 +97,25 @@ def invoice_ocr():
   img = __get_img__(filename, read)
 
   processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
-  results = model(processed_img, save=True)[0]
-  boxes = results.boxes.data.tolist()
-  names = results.names
   ocrResult = {}
-  converted_detections = []
-  labels = {}
-  for obj in boxes:
-    left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
-    label = int(obj[5])
-    if label in labels:
-      continue
-    labels[label] = label
-    box = convert_coordinates([left, top, right, bottom], orig_size, new_size, paste_coords)
-    converted_detections.append([*box, label])
+  converted_detections = predict2.start(resize_img)
   for obj in converted_detections:
     left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
-    label = int(obj[4])
-    cropped_img = img[top:bottom, left:right]
+    box = convert_coordinates([left, top, right, bottom], orig_size, new_size, paste_coords)
+    left, top, right, bottom = box
+    label = str(obj[4])
+    cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     rr = ocr.ocr(cropped_img, det=False, cls=False)
     for line in rr:
       if line is None:
         continue
       for word_info in line:
-        ocrResult[names[label]] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
+        ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
   return ocrResult
+
+
+
+
 
 def img_joint(new_img, old_img, axis=0):
   w1, h1 = old_img.size

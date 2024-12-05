@@ -1,0 +1,36 @@
+mode: paddle
+draw_threshold: 0.5
+metric: COCO
+use_dynamic_shape: false
+arch: DETR
+min_subgraph_size: 3
+Preprocess:
+- interp: 2
+  keep_ratio: false
+  target_size:
+  - 640
+  - 640
+  type: Resize
+- mean:
+  - 0.0
+  - 0.0
+  - 0.0
+  norm_type: none
+  std:
+  - 1.0
+  - 1.0
+  - 1.0
+  type: NormalizeImage
+- type: Permute
+label_list:
+- buyer_name
+- seller_name
+- seller_code
+- tax_inclusive_total_amount
+- invoice_code
+- invoice_number
+- buyer_code
+- tax_exclusive_total_amount
+- issue_date
+- tax_total_amount
+- title
