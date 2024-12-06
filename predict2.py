@@ -27,7 +27,7 @@ labels = model2.pred_config.labels
 
 
 
-def start(processed_img, flag=1):
+def start(processed_img, flag='1'):
   if flag == '1':
     return rtdetr(processed_img)
   transform = transforms.ToTensor()

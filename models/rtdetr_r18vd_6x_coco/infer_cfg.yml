@@ -23,14 +23,14 @@ Preprocess:
   type: NormalizeImage
 - type: Permute
 label_list:
+- title
+- invoice_code
+- invoice_number
+- issue_date
 - buyer_name
 - buyer_code
-- tax_inclusive_total_amount
-- seller_code
-- invoice_code
 - tax_exclusive_total_amount
-- issue_date
-- invoice_number
-- seller_name
 - tax_total_amount
-- title
+- tax_inclusive_total_amount
+- seller_name
+- seller_code

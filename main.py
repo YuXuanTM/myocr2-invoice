@@ -21,7 +21,7 @@ types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf', 'application
 FIXED_WIDTH = 1219
 
 # 图片预处理
-def preprocess_image(image_path, target_w=512, target_h=512):
+def preprocess_image(image_path, target_w=640, target_h=640):
 
   img = Image.fromarray(image_path)
   orig_w, orig_h = img.size
