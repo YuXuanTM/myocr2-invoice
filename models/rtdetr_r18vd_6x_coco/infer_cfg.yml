@@ -24,13 +24,13 @@ Preprocess:
 - type: Permute
 label_list:
 - buyer_name
-- seller_name
-- seller_code
-- tax_inclusive_total_amount
-- invoice_code
-- invoice_number
 - buyer_code
+- tax_inclusive_total_amount
+- seller_code
+- invoice_code
 - tax_exclusive_total_amount
 - issue_date
+- invoice_number
+- seller_name
 - tax_total_amount
 - title
