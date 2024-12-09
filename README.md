@@ -1,11 +1,14 @@
 # myocr2-invoice
 
 #### 介绍
-发票OCR识别，实现方式使用YOLOv10提取关键位置发票信息，PaddleOCR根据提取的位置进行文字识别。
+发票OCR识别，实现方式使用RT-DERTv2目标检测提取关键位置发票信息，PaddleOCR根据提取的位置进行文字识别。
 支持图片和PDF识别，主要识别了发票标题、发票代码、发票号码、开票日期、购买方名称、购买方识别号、销售方名称、销售方识别号、含税金额、不含税金额、税费信息。
 
+#### 说明
+由于YOLO和PaddleOCR无法同时使用GPU加速, 使用RT-DERTv2替代YOLO, 在GPU环境下耗时变为二百多毫秒, 而且RT-DERT的开源协议是Apache-2.0 license使用起来顾虑会更少
+
 #### 软件架构
-YOLOv10+PaddleOCR+Flask
+RT-DERTv2+PaddleOCR+Flask
 
 
 #### 安装教程
@@ -29,8 +32,8 @@ Python3.9环境，建议使用Anaconda管理python环境
 
 #### 测试截图
 
-经测试GPU环境下平均三百多毫秒，CPU环境下一秒左右
-![输入图片说明](https://foruda.gitee.com/images/1733117962971085706/7da738f8_5748498.png "GPU环境平均耗时")
+经测试GPU环境下平均二百多毫秒，CPU环境下一秒左右
+![img_1.png](GPU环境平均耗时)
 ![输入图片说明](https://foruda.gitee.com/images/1733118115493827803/c57188ac_5748498.png "CPU环境平均耗时")
 
 ![输入图片说明](https://foruda.gitee.com/images/1733117764446225949/6cdf117d_5748498.png "屏幕截图")
@@ -44,7 +47,4 @@ Python3.9环境，建议使用Anaconda管理python环境
 
 #### 注意注意注意
 
-若要商用请注意YOLOv10开源协议以及PaddleOCR开源协议，项目地址如下<br>
-YOLOv10：https://github.com/THU-MIG/yolov10 <br>
-PaddleOCR：https://github.com/PaddlePaddle/PaddleOCR
 
