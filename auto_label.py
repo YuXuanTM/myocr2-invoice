@@ -6,13 +6,10 @@ import predict2
 import random
 
 from main import img_joint
-from ultralytics import YOLOv10
 from PIL import Image
 from main import preprocess_image
 from main import convert_coordinates
 from main import __get_img__
-
-# model = YOLOv10(model=r'models/best.pt')
 
 def generate_pretty_color():
   # 避免过亮或过暗的颜色，这里我们设置RGB每个分量的范围为[64, 191]

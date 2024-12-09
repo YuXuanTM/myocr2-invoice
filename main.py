@@ -8,14 +8,11 @@ from paddleocr import PaddleOCR
 from flask import Flask, request
 from PIL import Image
 from torchvision import transforms
-# from my_predict2 import start
 
 app = Flask(__name__)
-
 ocr = PaddleOCR(
     rec=r'models/ch_PP-OCRv4_rec_infer',
-    det=r'models/ch_PP-OCRv4_det_infer',
-    use_gpu=True)
+    det=r'models/ch_PP-OCRv4_det_infer')
 
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf', 'application/ofd']
 FIXED_WIDTH = 1219

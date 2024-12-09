@@ -16,3 +16,4 @@ huggingface-hub==0.23.2
 safetensors==0.4.3
 flask
 pymupdf
+gunicorn

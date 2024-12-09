@@ -1,22 +1,23 @@
 from ultralytics import YOLOv10
 from torchvision import transforms
 
-import os
 import numpy as np
 from deploy.python.infer import Detector
 
 
 model = YOLOv10(model=r'models/best.pt')
+# CPU OR GPU
+device = 'CPU'
 
 # 设置模型目录和输出目录
-model_dir = r"models/rtdetr_r18vd_6x_coco"  # 替换为你的模型目录
+model_dir = r"models/rtdetrv2"  # 替换为你的模型目录
 output_dir = r"output"  # 替换为你的输出目录
 confidence_threshold = 0.3
 model2 = Detector(model_dir=model_dir,
-                 device='GPU',
+                 device=device,
                  run_mode='paddle',
                  batch_size=1,
-                 cpu_threads=1,
+                 cpu_threads=5,
                  enable_mkldnn=True,
                  enable_mkldnn_bfloat16=True,
                  output_dir=output_dir,
