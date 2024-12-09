@@ -42,7 +42,7 @@ Python3.9环境，建议使用Anaconda管理python环境
 目前训练数据种类比较少，后续逐步完善。
 
 #### 自己训练模型
-训练YOLO检测模型可以使用auto_label.py进行半自动标注，标注完成后使用PPOCRLabel打开directory变量的目录进行微调即可，调整完成后转换为yolo格式数据就可以训练啦。
+训练RT-DETRv2检测模型可以使用auto_label.py进行半自动标注，标注完成后使用PPOCRLabel打开directory变量的目录进行微调即可，调整完成后转换为coco格式数据就可以训练啦，后续会整理提供格式转换的脚本。
 
 
 #### 注意注意注意
