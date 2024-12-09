@@ -33,7 +33,7 @@ Python3.9环境，建议使用Anaconda管理python环境
 #### 测试截图
 
 经测试GPU环境下平均二百多毫秒，CPU环境下一秒左右
-![输入图片说明](imagesimage.png)(GPU环境平均耗时)
+![输入图片说明](images/imagesimage.png)(GPU环境平均耗时)
 ![输入图片说明](https://foruda.gitee.com/images/1733118115493827803/c57188ac_5748498.png "CPU环境平均耗时")
 
 ![输入图片说明](https://foruda.gitee.com/images/1733117764446225949/6cdf117d_5748498.png "屏幕截图")
