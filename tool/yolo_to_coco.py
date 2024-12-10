@@ -22,11 +22,11 @@ def parse_yolo_annotation(label_path, image_id, annotation_id, categories, image
 
             xmin = x_center - width / 2
             ymin = y_center - height / 2
-            label_name = label_coco_info[class_id]
-            category_id = get_category_id(label_name, categories)
-            if not category_id:
-                category_id = class_id + 1
-                categories.append({'id': category_id, 'name': label_name})
+            category_id = class_id + 1
+            # category_id = get_category_id(label_name, categories)
+            # if not category_id:
+            #     category_id = class_id + 1
+            #     categories.append({'id': category_id, 'name': label_name})
 
             annotations.append({
                 'id': annotation_id,
@@ -39,11 +39,12 @@ def parse_yolo_annotation(label_path, image_id, annotation_id, categories, image
             annotation_id += 1
 
     return annotations, annotation_id
-
 def convert_yolo_to_coco(label_coco_info, yolo_dir, output_file, values):
     images = []
     annotations = []
-    categories = label_coco_info
+    # categories = label_coco_info
+    categories = [{'id': info + 1, 'name': label_coco_info[info]} for info in label_coco_info]
+    # categories.append({'id': category_id, 'name': label_name})
 
     annotation_id = 1
     image_id = 1

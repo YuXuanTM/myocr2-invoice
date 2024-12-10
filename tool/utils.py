@@ -13,10 +13,10 @@ import tool.public_info as public_info
 
 if __name__ == "__main__":
   # 自动标注
-  auto_label.label(public_info)
+  # auto_label.label(public_info)
   # 转yolo格式
   # to_yolo.to(public_info)
   # 划分数据集
   # divide_dataset.divide(public_info)
   # yolo转coco
-  # yolo_to_coco.to(public_info)
+  yolo_to_coco.to(public_info)

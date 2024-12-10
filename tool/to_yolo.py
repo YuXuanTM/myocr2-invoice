@@ -1,5 +1,6 @@
 import os
 import cv2
+from PIL import Image
 
 # filename = "D:/Project/python/img2/"  # 需要转换的标注文件
 
@@ -77,10 +78,12 @@ def normalization(xmin, ymin, xmax, ymax, img_w, img_h):
 
 def get_img_size(img_path):
   print(img_path)
-  mat = cv2.imread(img_path)
+  mat = Image.open(img_path)
+  # mat = cv2.imread(img_path)
   if mat is None:
     return mat
-  return mat.shape
+  # return mat.shape
+  return mat.size
 
 def to(public_info):
   # path = "D:\Project\python\myocr2-invoice\img2"

@@ -5,7 +5,7 @@ def get_file_path(filepath):
   directory_path.mkdir(parents=True, exist_ok=True)
   return filepath
 # 待标注的目标路径
-directory = get_file_path("D:\发票\ofd")
+directory = get_file_path("C:\data\ofd")
 # directory = get_file_path("D:\发票\发票3")
 # directory = get_file_path(r"D:\发票\fapiao")
 base_path = get_file_path("out")
@@ -32,4 +32,4 @@ label_info = {
         "seller_name": 9,
         "seller_code": 10
       }
-label_coco_info = [{label_info[label] + 1: label} for label in label_info]
+label_coco_info = {label_info[label]: label for label in label_info}
