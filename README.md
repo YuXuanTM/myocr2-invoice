@@ -15,7 +15,7 @@ RT-DERTv2+PaddleOCR+Flask
 
 Python3.9环境，建议使用Anaconda管理python环境
 
-1. pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+1. pip install -r requirements.txt
 2. 安装PaddleOCR所需内容，参考https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html <br>
 使用gpu请修改predict2.py文件中device='GPU'<br>
 建议使用最新版本, Linux cpu环境我使用了2.5.2版本很慢(4秒左右), 又换回2.6.2版本(1秒左右)
@@ -24,7 +24,7 @@ Python3.9环境，建议使用Anaconda管理python环境
   python -m pip install paddlepaddle==2.6.2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/ <br>
  2.2 gpu环境以英伟达显卡CUDA11.7为例 <br>
   python -m pip install paddlepaddle-gpu==2.6.1.post117 -f https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html -i https://pypi.tuna.tsinghua.edu.cn/simple
-3. pip install paddleocr -i https://pypi.tuna.tsinghua.edu.cn/simple
+3. pip install paddleocr
 4. (1)gunicorn -w 4 -b 0.0.0.0:5000 main:app 端口可以自由设置 <br>
    (2)python main.py <br>
    以上都可以启动服务 <br>
