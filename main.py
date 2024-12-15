@@ -174,8 +174,8 @@ def invoice_ocr():
     box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
     left, top, right, bottom = box
     label = str(obj[4])
-    # cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
-    cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     rr = ocr.ocr(cropped_img, det=False, cls=False)
     for line in rr:
       if line is None:
