@@ -2,7 +2,7 @@ import numpy as np
 from deploy.python.infer import Detector
 
 # CPU OR GPU
-device = 'CPU'
+device = 'GPU'
 
 # 设置模型目录和输出目录
 model_dir = r"models/rtdetrv2"  # 替换为你的模型目录

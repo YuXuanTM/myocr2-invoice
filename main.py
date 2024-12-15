@@ -20,8 +20,8 @@ ocr = PaddleOCR(
 
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
-# FIXED_WIDTH = 1219
-FIXED_WIDTH = 2000
+FIXED_WIDTH = 1219
+# FIXED_WIDTH = 2000
 
 
 # 图片预处理
@@ -48,8 +48,10 @@ def preprocess_image(image_path, target_w=640, target_h=640):
   input_tensor = transform(canvas).unsqueeze(0)
   return input_tensor, (orig_w, orig_h), (new_w, new_h), (paste_x, paste_y), canvas
 
-def preprocess_image2(image_path, target_w=512, target_h=512):
-  img = Image.fromarray(image_path)
+def preprocess_image2(img, target_w=512, target_h=512):
+  if not isinstance(img, Image.Image):
+    img = Image.fromarray(img)
+
   orig_w, orig_h = img.size
   img_resized = img.resize((target_w, target_h))
   transform = transforms.ToTensor()
@@ -106,11 +108,11 @@ def __get_img__(filename, file):
     img_np = ofd.to_jpg()
     ofd.del_data()
     img = np.array(img_np[0])
-    img_pil = Image.fromarray(img)
-    (w, h) = img_pil.size
-    scale_factor = FIXED_WIDTH / w
-    resized_img_pil = img_pil.resize((FIXED_WIDTH, int(h * scale_factor)))
-    img = np.array(resized_img_pil)
+    # img_pil = Image.fromarray(img)
+    # (w, h) = img_pil.size
+    # scale_factor = FIXED_WIDTH / w
+    # resized_img_pil = img_pil.resize((FIXED_WIDTH, int(h * scale_factor)))
+    # img = np.array(resized_img_pil)
   elif filename.endswith('.pdf'):
     if isinstance(file, str):
       doc = fitz.open(file)
@@ -119,18 +121,13 @@ def __get_img__(filename, file):
     if len(doc) == 0:
       return {}
     page = doc.load_page(0)
-    # i = 1
-    # for img_index, img in enumerate(page.get_images(full=True)):
-    #   xref = img[0]
-    #   base_image = doc.extract_image(xref)
-    #   image_bytes = base_image["image"]
-    #   image_ext = f".{base_image['ext']}"
-    #   temp_img_path = f"img_{i}_{img_index}{image_ext}"
-    #   i = i + 1
-    #   with open(temp_img_path, "wb") as img_file:
-    #       img_file.write(image_bytes)
-
     original_width = page.rect.width
+    for img_index, img in enumerate(page.get_images(full=True)):
+      xref = img[0]
+      (w, h) = img[2], img[3]
+      if w / original_width > 0.5:
+        continue
+      doc._deleteObject(xref)
     scale_factor = FIXED_WIDTH / original_width
     pix = page.get_pixmap(matrix=fitz.Matrix(scale_factor, scale_factor))
     img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w,pix.n)
@@ -155,18 +152,16 @@ def invoice_ocr():
   read = uploaded_file.read()
   filename = uploaded_file.filename
   img = __get_img__(filename, read)
-
   processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img)
   ocrResult = {}
   converted_detections = predict2.start(resize_img)
-
-  # pil_image = Image.fromarray(img).convert('L')
-  # img_np = np.array(pil_image)
+  # image = Image.fromarray(img)
+  # img_np = np.array(image.convert('L'))
   # if len(img_np.shape) == 3:
   #   img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
   # thresh = cv2.adaptiveThreshold(img_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
   #                                cv2.THRESH_BINARY, 85, 11)
-  # cv2.imwrite('processed_image.png', thresh)
+  # cv2.imwrite('processed_image.png', img)
 
   for obj in converted_detections:
     # left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
@@ -175,6 +170,7 @@ def invoice_ocr():
     left, top, right, bottom = box
     label = str(obj[4])
     cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     rr = ocr.ocr(cropped_img, det=False, cls=False)
     for line in rr:
