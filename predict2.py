@@ -1,5 +1,3 @@
-from torchvision import transforms
-
 import numpy as np
 from deploy.python.infer import Detector
 
@@ -14,7 +12,7 @@ model2 = Detector(model_dir=model_dir,
                  device=device,
                  run_mode='paddle',
                  batch_size=1,
-                 cpu_threads=5,
+                 cpu_threads=1,
                  enable_mkldnn=True,
                  enable_mkldnn_bfloat16=True,
                  output_dir=output_dir,

@@ -5,12 +5,13 @@ def get_file_path(filepath):
   directory_path.mkdir(parents=True, exist_ok=True)
   return filepath
 # 待标注的目标路径
-directory = get_file_path("C:\data\ofd")
-# directory = get_file_path("D:\发票\发票3")
+directory = get_file_path(r"D:\发票\1210")
+# directory = get_file_path(r"D:\发票\1211\ofd")
 # directory = get_file_path(r"D:\发票\fapiao")
 base_path = get_file_path("out")
 # 标注信息保存路径.
 target_path = get_file_path(base_path + '/img2')
+label_img_url = get_file_path('img2')
 # 转换的label信息目录
 convert_path = get_file_path(base_path + "/convert_label/")
 # 数据集划分目录

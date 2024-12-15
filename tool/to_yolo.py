@@ -14,8 +14,8 @@ def read_txt(file_name):
   file = open(file_name, 'r', encoding='utf-8')
   file_data = file.readlines()  # 读取所有行
   for row in file_data:
-    tmp_list = row.split(' ')
-    data.append(tmp_list)  # 将每行数据插入data中
+    # tmp_list = row.split(' ')
+    data.append(row)  # 将每行数据插入data中
   file.close()
   return data
 
@@ -77,7 +77,7 @@ def normalization(xmin, ymin, xmax, ymax, img_w, img_h):
 
 
 def get_img_size(img_path):
-  print(img_path)
+  print("yolo_label_url:", img_path)
   mat = Image.open(img_path)
   # mat = cv2.imread(img_path)
   if mat is None:
@@ -91,7 +91,8 @@ def to(public_info):
   data = read_txt(public_info.target_path + "/" + "Label.txt")
   for img_data in data:
     # 每行数据提取图片名
-    img_name = str(img_data).split("\\t")[0].split('/')[1]
+    img_name = img_data.split("\t")[0].split('/')[1]
+    img_data = img_data.split(" ")
     # 每行数据提取坐标信息
     xywh = (str(img_data).split("\\t")[1].split("\\n")[0]
             .replace("',", "")

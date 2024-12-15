@@ -45,7 +45,9 @@ def label(public_info):
   existing_lines = []
   try:
     file = open(label_file_name, 'r+', encoding='utf-8')
-    existing_lines = [word for line in file.readlines() for word in line.strip().split()[0]]
+    for readline in file.readlines():
+      existing_lines.append(readline.split('\t')[0].rsplit('/')[1])
+    # existing_lines = [word for line in file.readlines() for word in line.strip().split()[0]]
   except FileNotFoundError:
     file = open(public_info.target_path + "/Label.txt", 'w', encoding='utf-8')
 
@@ -56,9 +58,11 @@ def label(public_info):
     file_path = os.path.join(public_info.directory, file_name)
     img = __get_img__(file_name, file_path)
     processed_img, orig_size, new_size, paste_coords, canvas = preprocess_image(img, 640, 640)
-    img_file = public_info.target_path + "/" + f"{name}" +".png"
+    img_file = public_info.target_path + "/1_" + f"{name}" +".png"
+    label_img_url = public_info.label_img_url + "/1_" + f"{name}" +".png"
     # 保存图片, 缩放后的.
-    canvas.save(img_file)
+    # canvas.save(img_file)
+    Image.fromarray(img).save(img_file)
     # cv2.imwrite(imgfile, canvas)
     converted_detections = predict2.start(canvas)
     canvas = np.array(canvas)
@@ -84,7 +88,8 @@ def label(public_info):
       cv2.rectangle(img, (o_left - 1, o_top - 20), (o_left + w + 10, o_top), color, thickness=-1, lineType=cv2.LINE_AA)
       cv2.putText(img, caption, (o_left, o_top - 5), 0, 0.5, (0, 0, 0), 1, 2)
       cv2.rectangle(img, (o_left, o_top), (o_right, o_bottom),color=color, thickness=2, lineType=cv2.LINE_AA)
-      points = [[left, top], [right, top], [right, bottom], [left, bottom]]
+      # points = [[left, top], [right, top], [right, bottom], [left, bottom]]
+      points = [[o_left, o_top], [o_right, o_top], [o_right, o_bottom], [o_left, o_bottom]]
       data = {
         "transcription": label,
         "points": points,
@@ -94,9 +99,9 @@ def label(public_info):
     json_data = json.dumps(data_line)
     # 保存对比图.
     img_joint(Image.fromarray(img), Image.fromarray(canvas), 1).save(public_info.contrast_path + "/" + f"{name}" + ".png")
-    aa =img_file + "	" + json_data
+    aa =label_img_url + "	" + json_data
     print(img_file)
-    if img_file not in existing_lines:
+    if label_img_url not in existing_lines:
       # 写入标注位置信息.
       file.write(aa + '\n')
 

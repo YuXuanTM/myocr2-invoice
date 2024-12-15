@@ -55,12 +55,21 @@ def convert_yolo_to_coco(label_coco_info, yolo_dir, output_file, values):
         image_dir = os.path.join(yolo_dir, split, 'images')
         label_dir = os.path.join(yolo_dir, split, 'labels')
 
-        for filename in os.listdir(image_dir):
+        # for filename in os.listdir(label_dir):
+        for filename in os.listdir("out\img2"):
             if filename.endswith(('.jpg', '.jpeg', '.png')):
                 image_path = os.path.join(image_dir, filename)
                 label_path = os.path.join(label_dir, filename.rsplit('.', 1)[0] + '.txt')
-
-                img = Image.open(image_path)
+                try:
+                  open(label_path, 'r')
+                except FileNotFoundError:
+                    continue
+                # label_path = os.path.join(image_dir, filename)
+                # image_path = os.path.join(label_dir, filename.rsplit('.', 1)[0] + '.txt')
+                try:
+                  img = Image.open(image_path)
+                except FileNotFoundError:
+                    continue
                 image_width, image_height = img.size
 
                 images.append({

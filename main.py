@@ -18,12 +18,14 @@ ocr = PaddleOCR(
     rec=r'models/ch_PP-OCRv4_rec_infer',
     det=r'models/ch_PP-OCRv4_det_infer')
 
-types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf', 'application/ofd', 'application/octet-stream']
-FIXED_WIDTH = 1219
+types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
+         'application/ofd', 'application/octet-stream']
+# FIXED_WIDTH = 1219
+FIXED_WIDTH = 2000
+
 
 # 图片预处理
 def preprocess_image(image_path, target_w=640, target_h=640):
-
   img = Image.fromarray(image_path)
   orig_w, orig_h = img.size
   if orig_w > orig_h:
@@ -46,8 +48,17 @@ def preprocess_image(image_path, target_w=640, target_h=640):
   input_tensor = transform(canvas).unsqueeze(0)
   return input_tensor, (orig_w, orig_h), (new_w, new_h), (paste_x, paste_y), canvas
 
+def preprocess_image2(image_path, target_w=512, target_h=512):
+  img = Image.fromarray(image_path)
+  orig_w, orig_h = img.size
+  img_resized = img.resize((target_w, target_h))
+  transform = transforms.ToTensor()
+  input_tensor = transform(img_resized).unsqueeze(0)
+  return input_tensor, (orig_w, orig_h),img_resized.size, (0, 0), img_resized
+
+
 # 缩放图片到原始图片映射
-def convert_coordinates(box, orig_size, new_size, paste_coords):
+def convert_coordinates(box, orig_size, new_size, paste_coords = (0, 0)):
   orig_w, orig_h = orig_size
   new_w, new_h = new_size
   paste_x, paste_y = paste_coords
@@ -63,20 +74,43 @@ def convert_coordinates(box, orig_size, new_size, paste_coords):
 
   return [x1_new, y1_new, x2_new, y2_new]
 
+def convert_coordinates2(box, orig_size, new_size, paste_coords):
+  orig_w, orig_h = orig_size
+  new_w, new_h = new_size
+  paste_x, paste_y = paste_coords
+
+  x1, y1, x2, y2 = box
+  scale_x =  new_w / orig_w
+  scale_y =  new_h / orig_h
+
+  x1_new = x1 * scale_x + paste_x
+  y1_new = y1 * scale_y + paste_y
+  x2_new = x2 * scale_x + paste_x
+  y2_new = y2 * scale_y + paste_y
+
+  return [x1_new, y1_new, x2_new, y2_new]
+
+
 def __get_img__(filename, file):
   filename = filename.lower()
   if filename.endswith('.ofd'):
     ofd = OFD()
     if isinstance(file, str):
       with open(file, "rb") as f:
-         ofdb64 = str(base64.b64encode(f.read()), "utf-8")
+        ofdb64 = str(base64.b64encode(f.read()), "utf-8")
     else:
       ofdb64 = str(base64.b64encode(file), "utf-8")
     # print(ofdb64)
-    ofd.read(ofdb64, save_xml=False, xml_name=f"{os.path.split(filename)[0]}_xml")
+    ofd.read(ofdb64, save_xml=False,
+             xml_name=f"{os.path.split(filename)[0]}_xml")
     img_np = ofd.to_jpg()
     ofd.del_data()
     img = np.array(img_np[0])
+    img_pil = Image.fromarray(img)
+    (w, h) = img_pil.size
+    scale_factor = FIXED_WIDTH / w
+    resized_img_pil = img_pil.resize((FIXED_WIDTH, int(h * scale_factor)))
+    img = np.array(resized_img_pil)
   elif filename.endswith('.pdf'):
     if isinstance(file, str):
       doc = fitz.open(file)
@@ -85,10 +119,21 @@ def __get_img__(filename, file):
     if len(doc) == 0:
       return {}
     page = doc.load_page(0)
+    # i = 1
+    # for img_index, img in enumerate(page.get_images(full=True)):
+    #   xref = img[0]
+    #   base_image = doc.extract_image(xref)
+    #   image_bytes = base_image["image"]
+    #   image_ext = f".{base_image['ext']}"
+    #   temp_img_path = f"img_{i}_{img_index}{image_ext}"
+    #   i = i + 1
+    #   with open(temp_img_path, "wb") as img_file:
+    #       img_file.write(image_bytes)
+
     original_width = page.rect.width
     scale_factor = FIXED_WIDTH / original_width
     pix = page.get_pixmap(matrix=fitz.Matrix(scale_factor, scale_factor))
-    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w,pix.n)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
   else:
@@ -100,6 +145,7 @@ def __get_img__(filename, file):
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
   return img
 
+
 @app.route('/invoice_ocr', methods=['POST'])
 def invoice_ocr():
   uploaded_file = request.files['file']
@@ -110,15 +156,26 @@ def invoice_ocr():
   filename = uploaded_file.filename
   img = __get_img__(filename, read)
 
-  processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
+  processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img)
   ocrResult = {}
   converted_detections = predict2.start(resize_img)
+
+  # pil_image = Image.fromarray(img).convert('L')
+  # img_np = np.array(pil_image)
+  # if len(img_np.shape) == 3:
+  #   img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
+  # thresh = cv2.adaptiveThreshold(img_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+  #                                cv2.THRESH_BINARY, 85, 11)
+  # cv2.imwrite('processed_image.png', thresh)
+
   for obj in converted_detections:
-    left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
-    box = convert_coordinates([left, top, right, bottom], orig_size, new_size, paste_coords)
+    # left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
+    left, top, right, bottom = obj[0], obj[1], obj[2], obj[3]
+    box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
     left, top, right, bottom = box
     label = str(obj[4])
-    cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    # cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     rr = ocr.ocr(cropped_img, det=False, cls=False)
     for line in rr:
       if line is None:
@@ -126,9 +183,6 @@ def invoice_ocr():
       for word_info in line:
         ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
   return ocrResult
-
-
-
 
 
 def img_joint(new_img, old_img, axis=0):
@@ -160,6 +214,7 @@ def img_joint(new_img, old_img, axis=0):
     im2 = np.concatenate((im2, im), axis=0)
     new_img = Image.fromarray(im2)
     return new_img
+
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=5000)
