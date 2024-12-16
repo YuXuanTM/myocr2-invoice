@@ -11,6 +11,7 @@ directory = get_file_path(r"D:\发票\1210")
 base_path = get_file_path("out")
 # 标注信息保存路径.
 target_path = get_file_path(base_path + '/img2')
+target_ocr_path = get_file_path(base_path + '/img2/ocr')
 label_img_url = get_file_path('img2')
 # 转换的label信息目录
 convert_path = get_file_path(base_path + "/convert_label/")

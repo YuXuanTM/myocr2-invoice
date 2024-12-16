@@ -17,7 +17,10 @@ app = Flask(__name__)
 ocr = PaddleOCR(
     rec=r'models/ch_PP-OCRv4_rec_infer',
     det=r'models/ch_PP-OCRv4_det_infer')
-
+ocr_en = PaddleOCR(
+    rec=r'models/en_PP-OCRv4_rec_infer',
+    det=r'models/ch_PP-OCRv4_det_infer')
+ch_class_list = ["title", "issue_date", "buyer_name", "seller_name"]
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
 FIXED_WIDTH = 1219
@@ -172,7 +175,11 @@ def invoice_ocr():
     cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
-    rr = ocr.ocr(cropped_img, det=False, cls=False)
+
+    if label in ch_class_list:
+      rr = ocr.ocr(cropped_img, det=False, cls=False)
+    else:
+      rr = ocr_en.ocr(cropped_img, det=False, cls=False)
     for line in rr:
       if line is None:
         continue
