@@ -32,6 +32,19 @@ label_info = {
         "tax_total_amount": 7,
         "tax_inclusive_total_amount": 8,
         "seller_name": 9,
-        "seller_code": 10
+        "seller_code": 10,
+        "check_code": 11,
+        "machine_number": 12,
+        "password_area": 13,
+        "item": 14,
+        "item_name": 15,
+        "item_type": 16,
+        "item_unit": 17,
+        "item_number": 18,
+        "item_price": 19,
+        "item_amount": 20,
+        "item_tax_rate": 21,
+        "item_tax": 22,
+        "item_serial_number": 23
       }
 label_coco_info = {label_info[label]: label for label in label_info}

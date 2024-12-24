@@ -34,3 +34,16 @@ label_list:
 - tax_inclusive_total_amount
 - seller_name
 - seller_code
+- check_code
+- machine_number
+- password_area
+- item
+- item_name
+- item_type
+- item_unit
+- item_number
+- item_price
+- item_amount
+- item_tax_rate
+- item_tax
+- item_serial_number

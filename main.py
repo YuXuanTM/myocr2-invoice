@@ -14,17 +14,14 @@ from PIL import Image
 from torchvision import transforms
 
 app = Flask(__name__)
-ocr = PaddleOCR(
-    rec=r'models/ch_PP-OCRv4_rec_infer',
-    det=r'models/ch_PP-OCRv4_det_infer')
-ocr_en = PaddleOCR(
-    rec=r'models/en_PP-OCRv4_rec_infer',
-    det=r'models/ch_PP-OCRv4_det_infer')
+app.json.ensure_ascii = False
+ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer')
+ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
 ch_class_list = ["title", "issue_date", "buyer_name", "seller_name"]
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
-FIXED_WIDTH = 1219
-# FIXED_WIDTH = 2000
+# FIXED_WIDTH = 1219
+FIXED_WIDTH = 2500
 
 
 # 图片预处理
@@ -98,6 +95,7 @@ def convert_coordinates2(box, orig_size, new_size, paste_coords):
 
 def __get_img__(filename, file):
   filename = filename.lower()
+  imgs = []
   if filename.endswith('.ofd'):
     ofd = OFD()
     if isinstance(file, str):
@@ -110,7 +108,9 @@ def __get_img__(filename, file):
              xml_name=f"{os.path.split(filename)[0]}_xml")
     img_np = ofd.to_jpg()
     ofd.del_data()
-    img = np.array(img_np[0])
+    for index in range(img_np.__len__()):
+      img = np.array(img_np[index])
+      imgs.append(img)
     # img_pil = Image.fromarray(img)
     # (w, h) = img_pil.size
     # scale_factor = FIXED_WIDTH / w
@@ -123,18 +123,20 @@ def __get_img__(filename, file):
       doc = fitz.open("pdf", file)
     if len(doc) == 0:
       return {}
-    page = doc.load_page(0)
-    original_width = page.rect.width
-    for img_index, img in enumerate(page.get_images(full=True)):
-      xref = img[0]
-      (w, h) = img[2], img[3]
-      if w / original_width > 0.5:
-        continue
-      doc._deleteObject(xref)
-    scale_factor = FIXED_WIDTH / original_width
-    pix = page.get_pixmap(matrix=fitz.Matrix(scale_factor, scale_factor))
-    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w,pix.n)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    for page_num in range(len(doc)):
+      page = doc.load_page(page_num)
+      original_width = page.rect.width
+      for img_index, img in enumerate(page.get_images(full=True)):
+        xref = img[0]
+        (w, h) = img[2], img[3]
+        if w / original_width > 0.5:
+          continue
+        doc._deleteObject(xref)
+      scale_factor = FIXED_WIDTH / original_width
+      pix = page.get_pixmap(matrix=fitz.Matrix(scale_factor, scale_factor))
+      img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w,pix.n)
+      img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+      imgs.append(img)
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
   else:
     if isinstance(file, str):
@@ -142,8 +144,9 @@ def __get_img__(filename, file):
       img = np.array(Image.open(file))
     else:
       img = cv2.imdecode(np.frombuffer(file, np.uint8), cv2.COLOR_BGR2RGB)
+    imgs.append(img)
     # processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image(img)
-  return img
+  return imgs
 
 
 @app.route('/invoice_ocr', methods=['POST'])
@@ -154,25 +157,31 @@ def invoice_ocr():
     return {}
   read = uploaded_file.read()
   filename = uploaded_file.filename
-  img = __get_img__(filename, read)
-  processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img)
-  ocrResult = {}
-  converted_detections = predict2.start(resize_img)
-  # image = Image.fromarray(img)
-  # img_np = np.array(image.convert('L'))
-  # if len(img_np.shape) == 3:
-  #   img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
-  # thresh = cv2.adaptiveThreshold(img_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-  #                                cv2.THRESH_BINARY, 85, 11)
-  # cv2.imwrite('processed_image.png', img)
+  ocr_result = {}
+  imgs = __get_img__(filename, read)
+  for img in imgs:
+    processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img, 640, 640)
+    converted_detections, items = predict2.start(resize_img)
+    ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size)
+    item_result_list = []
+    for item in items:
+      item_result = {}
+      item_result_list.append(item_result)
+      ocr_and_set_value(item, img, new_size, item_result, orig_size)
+    ocr_result['items'] = item_result_list
 
+  return ocr_result
+
+
+def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size):
   for obj in converted_detections:
     # left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
     left, top, right, bottom = obj[0], obj[1], obj[2], obj[3]
     box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
     left, top, right, bottom = box
     label = str(obj[4])
-    cropped_img = img[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
+    cropped_img = img[math.floor(top):math.ceil(bottom),
+                  math.floor(left):math.ceil(right)]
     # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
 
@@ -184,9 +193,11 @@ def invoice_ocr():
       if line is None:
         continue
       for word_info in line:
-        ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
-  return ocrResult
-
+        # ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
+        if label in ocr_result:
+         ocr_result[label] = ocr_result[label] + '\n' + word_info[0]
+        else:
+          ocr_result[label] = word_info[0]
 
 def img_joint(new_img, old_img, axis=0):
   w1, h1 = old_img.size
