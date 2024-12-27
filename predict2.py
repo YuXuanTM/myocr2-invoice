@@ -63,7 +63,7 @@ def start(processed_img):
   end_time  = time.perf_counter()
   execution_time = end_time - start_time
   print(f"检测耗时: {execution_time} 秒")
-  return boxes.values(), item_info.values()
+  return boxes.values(), item_info.values(), item_boxes, items
 
 def set_box(item_boxes, n):
   new_box = None

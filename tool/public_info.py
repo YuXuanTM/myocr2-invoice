@@ -5,8 +5,8 @@ def get_file_path(filepath):
   directory_path.mkdir(parents=True, exist_ok=True)
   return filepath
 # 待标注的目标路径
-directory = get_file_path(r"D:\发票\1210")
-# directory = get_file_path(r"D:\发票\1211\ofd")
+# directory = get_file_path(r"D:\发票\1210")
+directory = get_file_path(r"D:\发票\1211\a")
 # directory = get_file_path(r"D:\发票\fapiao")
 base_path = get_file_path("out")
 # 标注信息保存路径.
@@ -45,6 +45,28 @@ label_info = {
         "item_amount": 20,
         "item_tax_rate": 21,
         "item_tax": 22,
-        "item_serial_number": 23
+        "item_serial_number": 23,
+        "buyer_address_telephone": 24,
+        "buyer_bank_account": 25,
+        "seller_address_telephone": 26,
+        "seller_bank_account": 27,
+        "remark": 28,
+        "payee": 29,
+        "recheck": 30,
+        "invoice_clerk": 31,
+        "electronic_ticket_number": 32,
+        "starting_station": 33,
+        "destination_station": 34,
+        "train_number": 35,
+        "seat_type": 36,
+        "seat_or_bunk_number":37,
+        "date_of_departure":38,
+        "time_of_departure":39,
+        "passengers":40,
+        "passenger_identification_number":41,
+        "departure": 42,
+        "destination": 43,
+        "vehicle_type": 44,
+        "carrier": 45,
       }
 label_coco_info = {label_info[label]: label for label in label_info}

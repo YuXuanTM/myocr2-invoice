@@ -68,7 +68,12 @@ def label(public_info):
       # canvas.save(img_file)
       Image.fromarray(img).save(img_file)
       # cv2.imwrite(imgfile, canvas)
-      converted_detections = predict2.start(canvas)
+      converted_detections, item_infos, item_boxes, items = predict2.start(canvas)
+      converted_detections = list(converted_detections)
+      for item in items:
+        converted_detections.append(list(item))
+      for item in item_boxes:
+        converted_detections.append(item)
       canvas = np.array(canvas)
       # results = model(processed_img)[0]
       # boxes = results.boxes.data.tolist()

@@ -10,7 +10,7 @@ import predict2
 import math
 from paddleocr import PaddleOCR
 from flask import Flask, request
-from PIL import Image
+from PIL import Image, ImageEnhance
 from torchvision import transforms
 
 app = Flask(__name__)
@@ -160,11 +160,15 @@ def invoice_ocr():
   ocr_result = {}
   imgs = __get_img__(filename, read)
   for img in imgs:
-    processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img, 640, 640)
-    converted_detections, items = predict2.start(resize_img)
+    img2 = Image.fromarray(img)
+    processed_img, orig_size, new_size, paste_coords, resize_img = preprocess_image2(img2, 640, 640)
+    converted_detections, item_infos, item_boxes, items = predict2.start(resize_img)
+    enhancer = ImageEnhance.Contrast(img2)
+    img2 = enhancer.enhance(2.0).convert('L')
+    img = np.array(img2)
     ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size)
     item_result_list = []
-    for item in items:
+    for item in item_infos:
       item_result = {}
       item_result_list.append(item_result)
       ocr_and_set_value(item, img, new_size, item_result, orig_size)
@@ -184,7 +188,8 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
                   math.floor(left):math.ceil(right)]
     # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
-
+    if cropped_img.size <= 0:
+      continue
     if label in ch_class_list:
       rr = ocr.ocr(cropped_img, det=False, cls=False)
     else:
@@ -195,7 +200,7 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
       for word_info in line:
         # ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
         if label in ocr_result:
-         ocr_result[label] = ocr_result[label] + '\n' + word_info[0]
+         ocr_result[label] = ocr_result[label] + word_info[0]
         else:
           ocr_result[label] = word_info[0]
 
