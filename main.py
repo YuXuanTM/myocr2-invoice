@@ -172,7 +172,8 @@ def invoice_ocr():
       item_result = {}
       item_result_list.append(item_result)
       ocr_and_set_value(item, img, new_size, item_result, orig_size)
-    ocr_result['items'] = item_result_list
+    if item_result_list.__len__() > 0:
+      ocr_result['items'] = item_result_list
 
   return ocr_result
 
