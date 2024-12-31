@@ -68,5 +68,8 @@ label_info = {
         "destination": 43,
         "vehicle_type": 44,
         "carrier": 45,
+        "item_license_plate_number": 46,
+        "item_from_the_date_of_passage": 47,
+        "item_passage_dates_are_uninterrupted": 48
       }
 label_coco_info = {label_info[label]: label for label in label_info}

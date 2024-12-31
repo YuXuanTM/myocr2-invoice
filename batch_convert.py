@@ -87,7 +87,7 @@ def label(public_info):
       continue
     name = file_name.split('.')[0]
     # 生成新图片名字前缀.
-    flag = "z_640_4_"
+    flag = "z_640_2_"
     if flag + name in existing_lines or name.startswith('z_') or name not in existing_lines:
       continue
 
@@ -106,11 +106,11 @@ def label(public_info):
       processed_img, orig_size, new_size, paste_coords, canvas = preprocess_image2(img, 640, 640)
       enhancer = ImageEnhance.Contrast(canvas)
       # 增强对比度
-      image_enhanced = enhancer.enhance(2.0)
+      image_enhanced = enhancer.enhance(3.0)
       pil_image = image_enhanced.convert('L')
       img_np = np.array(pil_image)
       # 可以使用以下处理生成多张标注的图片, 需要时依次取消注释.
-      # canvas = pil_image
+      canvas = pil_image
       # canvas = image_enhanced
 
       img_file = public_info.target_path + "/" + flag + f"{name}" +".png"

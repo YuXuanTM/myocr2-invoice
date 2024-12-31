@@ -69,3 +69,6 @@ label_list:
 - destination
 - vehicle_type
 - carrier
+- item_license_plate_number
+- item_from_the_date_of_passage
+- item_passage_dates_are_uninterrupted

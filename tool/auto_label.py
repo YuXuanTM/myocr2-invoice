@@ -6,7 +6,7 @@ import predict2
 import random
 
 from main import img_joint
-from PIL import Image
+from PIL import Image, ImageEnhance
 from main import preprocess_image
 from main import convert_coordinates
 from main import __get_img__
@@ -46,7 +46,8 @@ def label(public_info):
   try:
     file = open(label_file_name, 'r+', encoding='utf-8')
     for readline in file.readlines():
-      existing_lines.append(readline.split('\t')[0].rsplit('/')[1])
+      # existing_lines.append(readline.split('\t')[0].rsplit('/')[1])
+      existing_lines.append(readline.split('\t')[0])
     # existing_lines = [word for line in file.readlines() for word in line.strip().split()[0]]
   except FileNotFoundError:
     file = open(public_info.target_path + "/Label.txt", 'w', encoding='utf-8')
@@ -61,6 +62,15 @@ def label(public_info):
     for img in imgs:
       index += 1
       processed_img, orig_size, new_size, paste_coords, canvas = preprocess_image(img, 640, 640)
+      enhancer = ImageEnhance.Contrast(canvas)
+      # 增强对比度
+      image_enhanced = enhancer.enhance(2.0)
+      pil_image = image_enhanced.convert('L')
+      img_np = np.array(pil_image)
+      # 可以使用以下处理生成多张标注的图片, 需要时依次取消注释.
+      canvas = pil_image
+      canvas = image_enhanced
+
       name = name + str(index)
       img_file = public_info.target_path + "/1_" + f"{name}" +".png"
       label_img_url = public_info.label_img_url + "/1_" + f"{name}" +".png"
