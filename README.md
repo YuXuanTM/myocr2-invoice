@@ -8,7 +8,7 @@
 由于YOLO和PaddleOCR无法同时使用GPU加速, 使用RT-DERTv2替代YOLO, 在GPU环境下耗时变为二百多毫秒, 而且RT-DERT的开源协议是Apache-2.0 license使用起来顾虑会更少
 
 #### 软件架构
-RT-DERTv2+PaddleOCR+Flask
+RT-DERTv2+PaddleOCR+Flask+easyofd
 
 
 #### 安装教程
