@@ -5,7 +5,7 @@ from shapely.geometry import Point, box as Box
 import time
 
 # CPU OR GPU
-device = 'GPU'
+device = 'CPU'
 
 # 设置模型目录和输出目录
 model_dir = r"models/rtdetrv2"  # 替换为你的模型目录
