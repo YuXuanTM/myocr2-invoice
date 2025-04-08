@@ -17,7 +17,9 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer')
 ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
-ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
+# ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
+# 单行识别的
+det_false_list = ["title", "invoice_number", "invoice_code", "machine_code", "machine_number"]
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
 # FIXED_WIDTH = 1219
@@ -189,6 +191,8 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
     top = max(0, math.floor(box[1] - 1))
     right = min(img.shape[1], math.ceil(box[2] + 1))
     bottom = min(img.shape[0], math.ceil(box[3] + 1))
+    if (right <= left) or (bottom <= top):
+      continue
     cropped_img = img[top:bottom, left:right]
     # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
@@ -204,13 +208,15 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
         borderType=cv2.BORDER_CONSTANT,
         value=[255, 255, 255]
     )
-
-    # if label in ch_class_list:
-    rr = ocr.ocr(cropped_img, det=True, cls=False)
-    # else:
-    #   rr = ocr_en.ocr(cropped_img, det=True, cls=False)
+    is_det = label not in det_false_list
+    rr = ocr.ocr(cropped_img, det=is_det, cls=False)
     if rr:
-      texts = [word_info[1][0] for line in rr if line for word_info in line]
+      texts = [
+        word_info[1][0] if is_det else word_info[0]
+        for line in rr if line
+        for word_info in line
+        if word_info and len(word_info) > 1
+      ]
       if texts:
         ocr_result.setdefault(label, '')
         ocr_result[label] += ''.join(texts)
