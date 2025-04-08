@@ -18,7 +18,8 @@ Python3.9环境，建议使用Anaconda管理python环境
 1. pip install -r requirements.txt <br>
 2. 若使用gpu， 请注释掉requirements.txt的paddlepaddle，根据官网中配置信息下载对应的，https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html <br>
 ![输入图片说明](images/img.png)(图片)
-3. pip install paddleocr
+
+[//]: # (3. pip install paddleocr)
 4. (1)gunicorn -w 4 -b 0.0.0.0:5000 main:app 端口可以自由设置 <br>
    (2)python main.py <br>
    以上都可以启动服务 <br>

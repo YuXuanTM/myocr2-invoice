@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer')
 ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
-ch_class_list = ["title", "issue_date", "buyer_name", "seller_name"]
+ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
 # FIXED_WIDTH = 1219
@@ -182,28 +182,38 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
   for obj in converted_detections:
     # left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
     left, top, right, bottom = obj[0], obj[1], obj[2], obj[3]
-    box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
-    left, top, right, bottom = box
     label = str(obj[4])
-    cropped_img = img[math.floor(top):math.ceil(bottom),
-                  math.floor(left):math.ceil(right)]
+    box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
+    # left, top, right, bottom = box
+    left = max(0, math.floor(box[0]))
+    top = max(0, math.floor(box[1] - 1))
+    right = min(img.shape[1], math.ceil(box[2] + 1))
+    bottom = min(img.shape[0], math.ceil(box[3] + 1))
+    cropped_img = img[top:bottom, left:right]
     # cv2.imwrite('aa/' + label + '.png', cropped_img)
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     if cropped_img.size <= 0:
       continue
-    if label in ch_class_list:
-      rr = ocr.ocr(cropped_img, det=False, cls=False)
-    else:
-      rr = ocr_en.ocr(cropped_img, det=False, cls=False)
-    for line in rr:
-      if line is None:
-        continue
-      for word_info in line:
-        # ocrResult[label] = re.sub(r'([￥¥]) *', '', word_info[0]).strip()
-        if label in ocr_result:
-         ocr_result[label] = ocr_result[label] + word_info[0]
-        else:
-          ocr_result[label] = word_info[0]
+    top_border = bottom_border = left_border = right_border = 5
+    cropped_img = cv2.copyMakeBorder(
+        cropped_img,
+        top=top_border,
+        bottom=bottom_border,
+        left=left_border,
+        right=right_border,
+        borderType=cv2.BORDER_CONSTANT,
+        value=[255, 255, 255]
+    )
+
+    # if label in ch_class_list:
+    rr = ocr.ocr(cropped_img, det=True, cls=False)
+    # else:
+    #   rr = ocr_en.ocr(cropped_img, det=True, cls=False)
+    if rr:
+      texts = [word_info[1][0] for line in rr if line for word_info in line]
+      if texts:
+        ocr_result.setdefault(label, '')
+        ocr_result[label] += ''.join(texts)
 
 def img_joint(new_img, old_img, axis=0):
   w1, h1 = old_img.size

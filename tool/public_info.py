@@ -70,6 +70,23 @@ label_info = {
         "carrier": 45,
         "item_license_plate_number": 46,
         "item_from_the_date_of_passage": 47,
-        "item_passage_dates_are_uninterrupted": 48
+        "item_passage_dates_are_uninterrupted": 48,
+        "machine_code": 49,
+        "machine_numbered": 50,
+        "factory_plate_model": 51,
+        "place_of_origin": 52,
+        "certificate_of_conformity_no": 53,
+        "import_certificate_number": 54,
+        "commodity_inspection_number": 55,
+        "engine_number": 56,
+        "vehicle_identification_number": 57,
+        "seller_telephone": 58,
+        "seller_address": 59,
+        "seller_bank_account_name": 60,
+        "tax_rate": 61,
+        "competent_tax_authorities_and_code": 62,
+        "tonnage": 63,
+        "maximum_number_of_passenger": 64,
+        "tax_department_reminder": 65
       }
 label_coco_info = {label_info[label]: label for label in label_info}

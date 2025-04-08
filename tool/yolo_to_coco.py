@@ -1,6 +1,8 @@
 import os
 import json
 from PIL import Image
+from sympy import false
+
 
 def get_category_id(name, categories):
     for category in categories:
@@ -32,9 +34,11 @@ def parse_yolo_annotation(label_path, image_id, annotation_id, categories, image
                 'id': annotation_id,
                 'image_id': image_id,
                 'category_id': category_id,
+                'segmentation': [[xmin+width, ymin, xmin+width, ymin+height, xmin, ymin+height, xmin, ymin]],
                 'bbox': [xmin, ymin, width, height],
                 'area': width * height,
-                'iscrowd': 0
+                'iscrowd': False,
+                'isbbox': True
             })
             annotation_id += 1
 
@@ -43,7 +47,7 @@ def convert_yolo_to_coco(label_coco_info, yolo_dir, output_file, values):
     images = []
     annotations = []
     # categories = label_coco_info
-    categories = [{'id': info + 1, 'name': label_coco_info[info]} for info in label_coco_info]
+    categories = [{'id': info + 1, 'name': label_coco_info[info], 'supercategory': 'item' if label_coco_info[info].startswith("item_") else ''} for info in label_coco_info]
     # categories.append({'id': category_id, 'name': label_name})
 
     annotation_id = 1

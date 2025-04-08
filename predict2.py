@@ -16,8 +16,8 @@ model2 = Detector(model_dir=model_dir,
                  run_mode='paddle',
                  batch_size=1,
                  cpu_threads=1,
-                 enable_mkldnn=True,
-                 enable_mkldnn_bfloat16=True,
+                 enable_mkldnn=False,
+                 enable_mkldnn_bfloat16=False,
                  output_dir=output_dir,
                  threshold=confidence_threshold,
                  delete_shuffle_pass=False
@@ -38,12 +38,13 @@ def start(processed_img):
     if confidence < confidence_threshold:
       continue
     label = labels[int(class_id)]
-    n = (left, top, right, bottom, label, confidence)
+    # n = (left, top, right, bottom, label, confidence)
     if label == 'item':
-      set_box(item_boxes, n)
+      # set_box(item_boxes, n)
+     continue
     elif label.startswith('item_'):
-      set_box(items, n)
-      # items.append(n)
+      # set_box(items, n)
+      continue
     else:
       boxe = boxes.get(label, None)
       if boxe is None or boxe[5] < confidence:
