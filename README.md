@@ -13,7 +13,7 @@ RT-DERTv2+PaddleOCR+Flask+easyofd
 
 #### 安装教程
 
-方式一: docker安裝, 目前只封裝了cpu环境, 速度有些慢。GPU环境请根据Dockerfile自行研究。 <br>
+方式一: docker安裝, 目前只封裝了cpu环境, 速度有些慢。GPU环境请根据Dockerfile自行研究, 理论上将镜像启动后进入容器将paddlepaddle替换为gpu版本就行了。 <br>
   1. docker pull qwerdocker78/myocr2-invoice-mini:0.0.2 <br>
   2. docker run -d --name myocr2-invoice --privileged=true -p 5000:5000 qwerdocker78/myocr2-invoice-mini:0.0.2 -c https://pypi.tuna.tsinghua.edu.cn/simple 
   3. 说明: 由于需要下载的python依赖很大10多个G上传不上去, 镜像中未包含依赖信息, 依赖信息会在docker run时下载, 所以第一次运行时会需要花费很长时间。 
