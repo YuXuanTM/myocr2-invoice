@@ -15,11 +15,17 @@ from torchvision import transforms
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
-ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer')
-ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
+ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer',
+                rec_model_dir=r'models/ch_PP-OCRv4_rec_infer',
+                det=r'models/ch_PP-OCRv4_det_infer',
+                cls=r'models/ch_ppocr_mobile_v2.0_cls_infer',
+                cls_model_dir=r'models/ch_ppocr_mobile_v2.0_cls_infer',
+                det_model_dir=r'models/ch_PP-OCRv4_det_infer')
+# ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
 # ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
-# 单行识别的
-det_false_list = ["title", "invoice_number", "invoice_code", "machine_code", "machine_number"]
+# 多行识别的
+det_true_list = ["password_area", "buyer_address_telephone", "buyer_bank_account",
+                 "seller_address_telephone", "seller_bank_account", "remark", "competent_tax_authorities_and_code"]
 types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
          'application/ofd', 'application/octet-stream']
 # FIXED_WIDTH = 1219
@@ -198,8 +204,11 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
     # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     if cropped_img.size <= 0:
       continue
-    top_border = bottom_border = left_border = right_border = 5
-    cropped_img = cv2.copyMakeBorder(
+    is_det = label in det_true_list
+    # is_det = False
+    if is_det:
+      top_border = bottom_border = left_border = right_border = 5
+      cropped_img = cv2.copyMakeBorder(
         cropped_img,
         top=top_border,
         bottom=bottom_border,
@@ -207,8 +216,7 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
         right=right_border,
         borderType=cv2.BORDER_CONSTANT,
         value=[255, 255, 255]
-    )
-    is_det = label not in det_false_list
+      )
     rr = ocr.ocr(cropped_img, det=is_det, cls=False)
     if rr:
       texts = [

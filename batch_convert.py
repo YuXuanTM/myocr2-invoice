@@ -23,8 +23,12 @@ from paddleocr import PaddleOCR
 from main import __get_img__
 
 ocr = PaddleOCR(
-    rec=r'models/ch_PP-OCRv4_rec_infer',
-    det=r'models/ch_PP-OCRv4_det_infer')
+  rec=r'models/ch_PP-OCRv4_rec_infer',
+  rec_model_dir=r'models/ch_PP-OCRv4_rec_infer',
+  det=r'models/ch_PP-OCRv4_det_infer',
+  cls=r'models/ch_ppocr_mobile_v2.0_cls_infer',
+  cls_model_dir=r'models/ch_ppocr_mobile_v2.0_cls_infer',
+  det_model_dir=r'models/ch_PP-OCRv4_det_infer')
 
 def generate_pretty_color():
   # 避免过亮或过暗的颜色，这里我们设置RGB每个分量的范围为[64, 191]
