@@ -267,18 +267,18 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
   result_groups  = process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list)
   det_img = result_groups.get("det_false_img", [])
   det_label = result_groups.get("det_false_label", [])
-  # 识别没一个一个识别快.
-  # if det_img:
-  #   rr = ocr.ocr(det_img, det=False, cls=False)
-  #   if rr:
-  #     for line in rr:
-  #       if line:
-  #        for index, word_info in enumerate(line):
-  #         if word_info and len(word_info) > 1:
-  #           ocr_result.setdefault(det_label[index], '')
-  #           ocr_result[det_label[index]] += word_info[0]
 
-  ocr_and_set_det_true_value(ocr_result, det_img, det_label)
+  if det_img:
+    rr = ocr.ocr(det_img, det=False, cls=False)
+    if rr:
+      for line in rr:
+        if line:
+         for index, word_info in enumerate(line):
+          if word_info and len(word_info) > 1:
+            ocr_result.setdefault(det_label[index], '')
+            ocr_result[det_label[index]] += word_info[0]
+
+  # ocr_and_set_det_true_value(ocr_result, det_img, det_label)
   det_img = result_groups["det_true_img"]
   det_label = result_groups["det_true_label"]
   ocr_and_set_det_true_value(ocr_result, det_img, det_label)
