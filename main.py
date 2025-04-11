@@ -5,6 +5,8 @@ import fitz
 from easyofd.ofd import OFD
 import os
 import base64
+import logging
+import time
 
 import predict2
 import math
@@ -12,7 +14,8 @@ from paddleocr import PaddleOCR
 from flask import Flask, request
 from PIL import Image, ImageEnhance
 from torchvision import transforms
-
+import concurrent.futures
+logging.disable(logging.DEBUG)
 app = Flask(__name__)
 app.json.ensure_ascii = False
 ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer',
@@ -24,10 +27,10 @@ ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer',
 # ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
 # ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
 # 多行识别的
-det_true_list = ["password_area", "buyer_address_telephone", "buyer_bank_account",
-                 "seller_address_telephone", "seller_bank_account", "remark", "competent_tax_authorities_and_code"]
-types = ['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
-         'application/ofd', 'application/octet-stream']
+det_true_list = set(["password_area", "buyer_address_telephone", "buyer_bank_account",
+                 "seller_address_telephone", "seller_bank_account", "remark", "competent_tax_authorities_and_code"])
+types = set(['image/png', 'image/jpg', 'image/jpeg', 'application/pdf',
+         'application/ofd', 'application/octet-stream'])
 # FIXED_WIDTH = 1219
 FIXED_WIDTH = 2500
 
@@ -185,49 +188,121 @@ def invoice_ocr():
 
   return ocr_result
 
-
-def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size):
-  for obj in converted_detections:
-    # left, top, right, bottom = int(obj[0]), int(obj[1]), int(obj[2]), int(obj[3])
+def process_single_object(obj, orig_size, new_size, img, det_true_list):
+    """处理单个检测对象，返回裁剪后的图像、标签及是否启用检测的标志"""
+    # 解析坐标和标签
     left, top, right, bottom = obj[0], obj[1], obj[2], obj[3]
     label = str(obj[4])
+
+    # 坐标转换
     box = convert_coordinates([left, top, right, bottom], orig_size, new_size)
-    # left, top, right, bottom = box
     left = max(0, math.floor(box[0]))
     top = max(0, math.floor(box[1] - 1))
     right = min(img.shape[1], math.ceil(box[2] + 1))
     bottom = min(img.shape[0], math.ceil(box[3] + 1))
+
+    # 检查有效区域
     if (right <= left) or (bottom <= top):
-      continue
+      return None, None, None
+
+    # 裁剪图像
     cropped_img = img[top:bottom, left:right]
-    # cv2.imwrite('aa/' + label + '.png', cropped_img)
-    # cropped_img = thresh[math.floor(top):math.ceil(bottom), math.floor(left):math.ceil(right)]
     if cropped_img.size <= 0:
-      continue
+      return None, None, None
+
+    # 判断是否需要检测增强
     is_det = label in det_true_list
-    # is_det = False
+
+    # 添加白色边框（仅针对需要检测的图片）
     if is_det:
-      top_border = bottom_border = left_border = right_border = 5
       cropped_img = cv2.copyMakeBorder(
         cropped_img,
-        top=top_border,
-        bottom=bottom_border,
-        left=left_border,
-        right=right_border,
+        top=5, bottom=5, left=5, right=5,
         borderType=cv2.BORDER_CONSTANT,
         value=[255, 255, 255]
       )
-    rr = ocr.ocr(cropped_img, det=is_det, cls=False)
+
+    # 统一通道格式
+    if len(cropped_img.shape) == 2:
+      cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_GRAY2RGB)
+    elif cropped_img.shape[2] == 4:
+      cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_RGBA2RGB)
+    else:
+      cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB)
+
+    return cropped_img, label, is_det
+
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+# 主处理函数
+def process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list):
+  """使用线程池并行处理所有检测对象"""
+  det_group = {"det_true_img": [], "det_true_label": [], "det_false_img": [], "det_false_label": []}
+
+  # 提交所有任务
+  futures = [
+    executor.submit(
+      process_single_object,
+      obj, orig_size, new_size, img, det_true_list
+    )
+    for obj in converted_detections
+  ]
+
+  # 收集结果
+  for future in futures:
+    cropped_img, label, is_det = future.result()
+    if cropped_img is not None:
+      group_key = "det_true" if is_det else "det_false"
+      det_group[group_key + "_img"].append(cropped_img)
+      det_group[group_key + "_label"].append(label)
+
+  return det_group
+
+def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size):
+  start_time  = time.perf_counter()
+  result_groups  = process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list)
+  det_img = result_groups.get("det_false_img", [])
+  det_label = result_groups.get("det_false_label", [])
+  if det_img:
+    rr = ocr.ocr(det_img, det=False, cls=False)
     if rr:
-      texts = [
-        word_info[1][0] if is_det else word_info[0]
-        for line in rr if line
-        for word_info in line
-        if word_info and len(word_info) > 1
-      ]
-      if texts:
-        ocr_result.setdefault(label, '')
-        ocr_result[label] += ''.join(texts)
+      for line in rr:
+        if line:
+         for index, word_info in enumerate(line):
+          if word_info and len(word_info) > 1:
+            ocr_result.setdefault(det_label[index], '')
+            ocr_result[det_label[index]] += word_info[0]
+  ocr_and_set_det_true_value(ocr_result, result_groups)
+  end_time  = time.perf_counter()
+  execution_time = end_time - start_time
+  print(f"识别耗时: {execution_time} 秒")
+
+def ocr_and_set_det_true_value(ocr_result, result_groups):
+  det_img = result_groups["det_true_img"]
+  det_label = result_groups["det_true_label"]
+  if det_img:
+    for index, e in enumerate(det_img):
+      rr = ocr.ocr(e, det=True, cls=False)
+      set_result_value(True, det_label[index], ocr_result, rr)
+
+
+def set_result_value(is_det, label, ocr_result, rr):
+  texts = get_result_value(is_det, rr)
+  if texts:
+    ocr_result.setdefault(label, '')
+    ocr_result[label] += ''.join(texts)
+
+
+def get_result_value(is_det, rr):
+  if rr:
+    texts = [
+      word_info[1][0] if is_det else word_info[0]
+      for line in rr if line
+      for word_info in line
+      if word_info and len(word_info) > 1
+    ]
+  else:texts = None
+  return texts
+
 
 def img_joint(new_img, old_img, axis=0):
   w1, h1 = old_img.size
