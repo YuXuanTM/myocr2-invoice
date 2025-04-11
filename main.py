@@ -237,7 +237,12 @@ executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 def process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list):
   """使用线程池并行处理所有检测对象"""
   det_group = {"det_true_img": [], "det_true_label": [], "det_false_img": [], "det_false_label": []}
-
+  # for obj in converted_detections:
+  #   cropped_img, label, is_det = process_single_object(obj, orig_size, new_size, img, det_true_list)
+  #   if cropped_img is not None:
+  #     group_key = "det_true" if is_det else "det_false"
+  #     det_group[group_key + "_img"].append(cropped_img)
+  #     det_group[group_key + "_label"].append(label)
   # 提交所有任务
   futures = [
     executor.submit(
@@ -262,27 +267,31 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
   result_groups  = process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list)
   det_img = result_groups.get("det_false_img", [])
   det_label = result_groups.get("det_false_label", [])
-  if det_img:
-    rr = ocr.ocr(det_img, det=False, cls=False)
-    if rr:
-      for line in rr:
-        if line:
-         for index, word_info in enumerate(line):
-          if word_info and len(word_info) > 1:
-            ocr_result.setdefault(det_label[index], '')
-            ocr_result[det_label[index]] += word_info[0]
-  ocr_and_set_det_true_value(ocr_result, result_groups)
+  # 识别没一个一个识别快.
+  # if det_img:
+  #   rr = ocr.ocr(det_img, det=False, cls=False)
+  #   if rr:
+  #     for line in rr:
+  #       if line:
+  #        for index, word_info in enumerate(line):
+  #         if word_info and len(word_info) > 1:
+  #           ocr_result.setdefault(det_label[index], '')
+  #           ocr_result[det_label[index]] += word_info[0]
+
+  ocr_and_set_det_true_value(ocr_result, det_img, det_label)
+  det_img = result_groups["det_true_img"]
+  det_label = result_groups["det_true_label"]
+  ocr_and_set_det_true_value(ocr_result, det_img, det_label)
   end_time  = time.perf_counter()
   execution_time = end_time - start_time
   print(f"识别耗时: {execution_time} 秒")
 
-def ocr_and_set_det_true_value(ocr_result, result_groups):
-  det_img = result_groups["det_true_img"]
-  det_label = result_groups["det_true_label"]
+def ocr_and_set_det_true_value(ocr_result, det_img, det_label, is_det=True):
+
   if det_img:
     for index, e in enumerate(det_img):
       rr = ocr.ocr(e, det=True, cls=False)
-      set_result_value(True, det_label[index], ocr_result, rr)
+      set_result_value(is_det, det_label[index], ocr_result, rr)
 
 
 def set_result_value(is_det, label, ocr_result, rr):
