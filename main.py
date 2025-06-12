@@ -205,6 +205,7 @@ def process_single_object(obj, orig_size, new_size, img, det_true_list):
     if (right <= left) or (bottom <= top):
       return None, None, None
 
+
     # 裁剪图像
     cropped_img = img[top:bottom, left:right]
     if cropped_img.size <= 0:
@@ -213,15 +214,6 @@ def process_single_object(obj, orig_size, new_size, img, det_true_list):
     # 判断是否需要检测增强
     is_det = label in det_true_list
 
-    # 添加白色边框（仅针对需要检测的图片）
-    if is_det:
-      cropped_img = cv2.copyMakeBorder(
-        cropped_img,
-        top=5, bottom=5, left=5, right=5,
-        borderType=cv2.BORDER_CONSTANT,
-        value=[255, 255, 255]
-      )
-
     # 统一通道格式
     if len(cropped_img.shape) == 2:
       cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_GRAY2RGB)
@@ -229,6 +221,17 @@ def process_single_object(obj, orig_size, new_size, img, det_true_list):
       cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_RGBA2RGB)
     else:
       cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB)
+
+    if is_det:
+      border_size = 2
+      bordered_img = np.full((cropped_img.shape[0] + 2 * border_size, cropped_img.shape[1] + 2 * border_size, 3), 255, dtype=np.uint8)
+      bordered_img[border_size:-border_size, border_size:-border_size] = cropped_img
+      # cropped_img = cv2.copyMakeBorder(
+      #   cropped_img,
+      #   top=5, bottom=5, left=5, right=5,
+      #   borderType=cv2.BORDER_CONSTANT,
+      #   value=[255, 255, 255]
+      # )
 
     return cropped_img, label, is_det
 
@@ -244,22 +247,27 @@ def process_with_thread_pool(converted_detections, orig_size, new_size, img, det
   #     det_group[group_key + "_img"].append(cropped_img)
   #     det_group[group_key + "_label"].append(label)
   # 提交所有任务
-  futures = [
-    executor.submit(
-      process_single_object,
-      obj, orig_size, new_size, img, det_true_list
-    )
-    for obj in converted_detections
-  ]
-
-  # 收集结果
-  for future in futures:
-    cropped_img, label, is_det = future.result()
+  # futures = [
+  #   executor.submit(
+  #     process_single_object,
+  #     obj, orig_size, new_size, img, det_true_list
+  #   )
+  #   for obj in converted_detections
+  # ]
+  #
+  # # 收集结果
+  # for future in futures:
+  #   cropped_img, label, is_det = future.result()
+  #   if cropped_img is not None:
+  #     group_key = "det_true" if is_det else "det_false"
+  #     det_group[group_key + "_img"].append(cropped_img)
+  #     det_group[group_key + "_label"].append(label)
+  for obj in converted_detections:
+    cropped_img, label, is_det = process_single_object(obj, orig_size, new_size, img, det_true_list)
     if cropped_img is not None:
       group_key = "det_true" if is_det else "det_false"
       det_group[group_key + "_img"].append(cropped_img)
       det_group[group_key + "_label"].append(label)
-
   return det_group
 
 def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size):
