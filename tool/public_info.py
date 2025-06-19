@@ -4,6 +4,10 @@ def get_file_path(filepath):
   directory_path = Path(filepath)
   directory_path.mkdir(parents=True, exist_ok=True)
   return filepath
+
+# CPU OR GPU
+device = 'GPU'
+
 # 待标注的目标路径
 # directory = get_file_path(r"D:\发票\1210")
 directory = get_file_path(r"D:\发票\1211\a")

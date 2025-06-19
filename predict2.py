@@ -3,25 +3,25 @@ from deploy.python.infer import Detector
 from rtree import index
 from shapely.geometry import Point, box as Box
 import time
-
-# CPU OR GPU
-device = 'CPU'
+from tool.public_info import device
 
 # 设置模型目录和输出目录
 model_dir = r"models/rtdetrv2"  # 替换为你的模型目录
 output_dir = r"output"  # 替换为你的输出目录
 confidence_threshold = 0.3
-model2 = Detector(model_dir=model_dir,
-                 device=device,
-                 run_mode='paddle',
-                 batch_size=1,
-                 cpu_threads=1,
-                 enable_mkldnn=False,
-                 enable_mkldnn_bfloat16=False,
-                 output_dir=output_dir,
-                 threshold=confidence_threshold,
-                 delete_shuffle_pass=False
-                 )
+model2 = Detector(
+    model_dir=model_dir,
+    device=device,
+    run_mode='paddle',
+    batch_size=1,
+    cpu_threads=1,
+    enable_mkldnn=False,
+    enable_mkldnn_bfloat16=False,
+    output_dir=output_dir,
+    threshold=confidence_threshold,
+    delete_shuffle_pass=True,
+    use_fd_format=False
+)
 labels = model2.pred_config.labels
 
 
@@ -38,12 +38,12 @@ def start(processed_img):
     if confidence < confidence_threshold:
       continue
     label = labels[int(class_id)]
-    # n = (left, top, right, bottom, label, confidence)
+    n = (left, top, right, bottom, label, confidence)
     if label == 'item':
-      # set_box(item_boxes, n)
+     set_box(item_boxes, n)
      continue
     elif label.startswith('item_'):
-      # set_box(items, n)
+      set_box(items, n)
       continue
     else:
       boxe = boxes.get(label, None)

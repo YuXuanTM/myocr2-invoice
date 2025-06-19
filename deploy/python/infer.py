@@ -993,7 +993,7 @@ def load_predictor(model_dir,
         raise ValueError(
             "Predict by TensorRT mode: {}, expect device=='GPU', but device == {}"
             .format(run_mode, device))
-
+    print("paddle.__version__:", paddle.__version__)
     if paddle.__version__ >= '3.0.0' or paddle.__version__ == '0.0.0':
         model_path = model_dir
         model_prefix = 'model'
@@ -1095,6 +1095,13 @@ def load_predictor(model_dir,
     config.switch_use_feed_fetch_ops(False)
     if delete_shuffle_pass:
         config.delete_pass("shuffle_channel_detect_pass")
+
+    # ==== 添加以下修复代码 ====
+    config.enable_memory_optim(False)
+    # config.enable_tensorrt_engine()
+
+    # ==== 修复代码结束 ====
+
     predictor = create_predictor(config)
     return predictor, config
 

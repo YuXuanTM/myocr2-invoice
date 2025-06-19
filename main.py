@@ -10,22 +10,17 @@ import time
 
 import predict2
 import math
-from paddleocr import PaddleOCR
+from TextOCR import predict
+
 from flask import Flask, request
 from PIL import Image, ImageEnhance
 from torchvision import transforms
 import concurrent.futures
+
 logging.disable(logging.DEBUG)
 app = Flask(__name__)
 app.json.ensure_ascii = False
-ocr = PaddleOCR(rec=r'models/ch_PP-OCRv4_rec_infer',
-                rec_model_dir=r'models/ch_PP-OCRv4_rec_infer',
-                det=r'models/ch_PP-OCRv4_det_infer',
-                cls=r'models/ch_ppocr_mobile_v2.0_cls_infer',
-                cls_model_dir=r'models/ch_ppocr_mobile_v2.0_cls_infer',
-                det_model_dir=r'models/ch_PP-OCRv4_det_infer')
-# ocr_en = PaddleOCR(rec=r'models/en_PP-OCRv4_rec_infer')
-# ch_class_list = ["title", "issue_date", "buyer_name", "seller_name", "invoice_clerk"]
+
 # 多行识别的
 det_true_list = set(["password_area", "buyer_address_telephone", "buyer_bank_account",
                  "seller_address_telephone", "seller_bank_account", "remark", "competent_tax_authorities_and_code"])
@@ -221,7 +216,7 @@ def process_single_object(obj, orig_size, new_size, img, det_true_list):
       cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_RGBA2RGB)
     else:
       cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB)
-
+    # cv2.imwrite('v.png', cropped_img)
     if is_det:
       border_size = 2
       bordered_img = np.full((cropped_img.shape[0] + 2 * border_size, cropped_img.shape[1] + 2 * border_size, 3), 255, dtype=np.uint8)
@@ -275,31 +270,54 @@ def ocr_and_set_value(converted_detections, img, new_size, ocr_result, orig_size
   result_groups  = process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list)
   det_img = result_groups.get("det_false_img", [])
   det_label = result_groups.get("det_false_label", [])
-
-  if det_img:
-    rr = ocr.ocr(det_img, det=False, cls=False)
-    if rr:
-      for line in rr:
-        if line:
-         for index, word_info in enumerate(line):
-          if word_info and len(word_info) > 1:
-            ocr_result.setdefault(det_label[index], '')
-            ocr_result[det_label[index]] += word_info[0]
+  analysis_ocr_result(det_img, det_label, ocr_result)
+  # analysis_ocr_result(det_img, det_label, ocr_result, 'ocr',
+  #                     rec_text='rec_texts')
+  # analysis_ocr_result(det_img, det_label, ocr_result, ocr, rec_text='rec_texts')
 
   # ocr_and_set_det_true_value(ocr_result, det_img, det_label)
   det_img = result_groups["det_true_img"]
   det_label = result_groups["det_true_label"]
-  ocr_and_set_det_true_value(ocr_result, det_img, det_label)
+  # ocr_and_set_det_true_value(ocr_result, det_img, det_label)
+  analysis_ocr_result(det_img, det_label, ocr_result, 'ocr', rec_text='rec_texts')
+
   end_time  = time.perf_counter()
   execution_time = end_time - start_time
   print(f"识别耗时: {execution_time} 秒")
 
+
+def analysis_ocr_result(det_img, det_label, ocr_result, ocr = 'rec', rec_text='rec_text'):
+  if det_img:
+    for i, di in enumerate(det_img):
+      rr = predict(di, ocr)
+      # rr = ocr.predict(di)
+      if rr:
+        for index, line in enumerate(rr):
+          if line:
+            ocr_result.setdefault(det_label[i], '')
+            ocr_result[det_label[i]] += ''.join(line[rec_text])
+    # 批量识别
+    # rr = ocr.predict(det_img)
+    # if rr:
+    #   for index, line in enumerate(rr):
+    #     if line:
+    #       ocr_result.setdefault(det_label[index], '')
+    #       ocr_result[det_label[index]] += line[rec_text]
+
+
 def ocr_and_set_det_true_value(ocr_result, det_img, det_label, is_det=True):
 
   if det_img:
-    for index, e in enumerate(det_img):
-      rr = ocr.ocr(e, det=True, cls=False)
-      set_result_value(is_det, det_label[index], ocr_result, rr)
+    rr = ocr.predict(det_img)
+    if rr:
+      for index, line in enumerate(rr):
+        if line:
+          ocr_result.setdefault(det_label[index], '')
+          ocr_result[det_label[index]] += ''.join(line['rec_texts'])
+    # for index, e in enumerate(det_img):
+      # rr = ocr.ocr(e, det=True, cls=False)
+      # rr = ocr.predict(e)
+      # set_result_value(is_det, det_label[index], ocr_result, rr)
 
 
 def set_result_value(is_det, label, ocr_result, rr):
@@ -315,7 +333,7 @@ def get_result_value(is_det, rr):
       word_info[1][0] if is_det else word_info[0]
       for line in rr if line
       for word_info in line
-      if word_info and len(word_info) > 1
+      if word_info and len(word_info) >= 1
     ]
   else:texts = None
   return texts
