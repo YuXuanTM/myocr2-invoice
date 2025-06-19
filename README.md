@@ -8,7 +8,7 @@
 RT-DERTv2+PaddleOCR+Flask+easyofd
 
 #### 最新动态
- - 2025.06.19: paddlepaddle 3.0.0=>paddlepaddle 3.0.0、PaddleOCR 2.9=>PaddleOCR 3.0.2、PPOCR-V4=>PPOCR-V5
+ - 2025.06.19: paddlepaddle 2.6.2=>paddlepaddle 3.0.0、PaddleOCR 2.9=>PaddleOCR 3.0.2、PPOCR-V4=>PPOCR-V5
 #### 安装教程
 Python3.9环境
 
