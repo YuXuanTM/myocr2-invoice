@@ -4,9 +4,6 @@
 发票OCR识别，支持【增值发票、普通发票、机动车发票、铁路发票】，实现方式使用RT-DERTv2目标检测提取关键位置发票信息，PaddleOCR根据提取的位置进行文字识别。
 支持图片和PDF识别，主要识别了发票标题、发票代码、发票号码、开票日期、购买方名称、购买方识别号、销售方名称、销售方识别号、含税金额、不含税金额、税费等信息。
 
-#### 说明
-由于YOLO和PaddleOCR无法同时使用GPU加速, 使用RT-DERTv2替代YOLO, 在GPU环境下耗时变为二百多毫秒, 而且RT-DERT的开源协议是Apache-2.0 license使用起来顾虑会更少
-
 #### 软件架构
 RT-DERTv2+PaddleOCR+Flask+easyofd
 
@@ -22,7 +19,7 @@ Python3.9环境
   3. (1)gunicorn -w 4 -b 0.0.0.0:5000 main:app 端口可以自由设置 <br>
    (2)python main.py <br>
    以上都可以启动服务 <br>
-  4. 启动成功发送地址测试http://127.0.0.1:5000/invoice_ocr
+  4. 启动成功发送地址测试(post请求，file参数)http://127.0.0.1:5000/invoice_ocr
 
 #### 发票识别截图
 ![增值发票识别](images/增值发票.png "屏幕截图")
@@ -33,8 +30,7 @@ Python3.9环境
 #### 后续
 目前训练数据种类比较少，后续逐步完善。
 
-
 #### 注意注意注意
-如需paddlepaddle<3.0.0版本请切换到PPOCR-V4分支
+如需paddlepaddle 3.0.0以下版本请切换到PPOCR-V4分支
 
 
