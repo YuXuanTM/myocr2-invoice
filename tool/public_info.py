@@ -8,7 +8,7 @@ def get_file_path(filepath):
 
 
 # CPU OR GPU
-device = 'CPU'
+device = 'GPU'
 text_ocr_type = 1
 
 # 待标注的目标路径

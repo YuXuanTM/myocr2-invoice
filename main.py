@@ -14,6 +14,7 @@ from TextOCR import predict
 from flask import Flask, request
 from PIL import Image, ImageEnhance
 from torchvision import transforms
+from concurrent.futures import ThreadPoolExecutor
 
 # logging.disable(logging.DEBUG)
 
@@ -235,7 +236,9 @@ def process_single_object(obj, orig_size, new_size, img, det_true_list):
     return cropped_img, label, is_det
 
 
-# executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+executor = ThreadPoolExecutor(max_workers=2)
+
+
 # 主处理函数
 def process_with_thread_pool(converted_detections, orig_size, new_size, img, det_true_list):
     """使用线程池并行处理所有检测对象"""
@@ -248,20 +251,20 @@ def process_with_thread_pool(converted_detections, orig_size, new_size, img, det
     #     det_group[group_key + "_label"].append(label)
     # 提交所有任务
     # futures = [
-    #   executor.submit(
-    #     process_single_object,
-    #     obj, orig_size, new_size, img, det_true_list
-    #   )
-    #   for obj in converted_detections
+    #     executor.submit(
+    #         process_single_object,
+    #         obj, orig_size, new_size, img, det_true_list
+    #     )
+    #     for obj in converted_detections
     # ]
     #
     # # 收集结果
     # for future in futures:
-    #   cropped_img, label, is_det = future.result()
-    #   if cropped_img is not None:
-    #     group_key = "det_true" if is_det else "det_false"
-    #     det_group[group_key + "_img"].append(cropped_img)
-    #     det_group[group_key + "_label"].append(label)
+    #     cropped_img, label, is_det = future.result()
+    #     if cropped_img is not None:
+    #         group_key = "det_true" if is_det else "det_false"
+    #         det_group[group_key + "_img"].append(cropped_img)
+    #         det_group[group_key + "_label"].append(label)
     for obj in converted_detections:
         cropped_img, label, is_det = process_single_object(obj, orig_size, new_size, img, det_true_list)
         if cropped_img is not None:
@@ -295,13 +298,27 @@ def analysis_ocr_result(det_img, det_label, ocr_result, ocr='rec', rec_text='rec
 
 
 def text_ocr(det_img, det_label, ocr, ocr_result, rec_text):
-    for i, di in enumerate(det_img):
-        rr = predict(di, ocr)
-        if rr:
-            for index, line in enumerate(rr):
-                if line:
-                    ocr_result.setdefault(det_label[i], '')
-                    ocr_result[det_label[i]] += ''.join(line[rec_text])
+    futures = [
+            executor.submit(
+                text_predict,
+                det_label, di, i, ocr, ocr_result, rec_text
+            )
+            for i, di in enumerate(det_img)
+        ]
+    for future in futures:
+        future.result()
+
+    # for i, di in enumerate(det_img):
+    #     text_predict(det_label, di, i, ocr, ocr_result, rec_text)
+
+
+def text_predict(det_label, di, i, ocr, ocr_result, rec_text):
+    rr = predict(di, ocr)
+    if rr:
+        for index, line in enumerate(rr):
+            if line:
+                ocr_result.setdefault(det_label[i], '')
+                ocr_result[det_label[i]] += ''.join(line[rec_text])
 
 
 def batch_text_ocr(det_img, det_label, ocr, ocr_result, rec_text):

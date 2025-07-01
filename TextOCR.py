@@ -15,7 +15,7 @@ ocr = PaddleOCR(
     use_textline_orientation=False
 )
 ocr_rec = TextRecognition(
-    mkldnn_cache_capacity=5,
+    mkldnn_cache_capacity=2,
     enable_mkldnn=True,
     device=device, model_name='PP-OCRv5_mobile_rec',
     model_dir=r"models/PP-OCRv5_mobile_rec_infer")
