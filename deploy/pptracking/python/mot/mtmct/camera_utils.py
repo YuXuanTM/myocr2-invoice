@@ -209,7 +209,7 @@ def get_sim_matrix(cid_tid_dict,
                    use_rerank=True,
                    use_st_filter=False):
     # Note: camera releated get_sim_matrix function,
-    # which is different from the one in utils.py.
+    # which is different from the one in label_utils.py.
     count = len(cid_tids)
 
     q_arr = np.array(
@@ -222,7 +222,7 @@ def get_sim_matrix(cid_tid_dict,
     st_mask = np.ones((count, count), dtype=np.float32)
     st_mask = intracam_ignore(st_mask, cid_tids)
 
-    # different from utils.py
+    # different from label_utils.py
     if use_st_filter:
         st_mask = st_filter(st_mask, cid_tids, cid_tid_dict)
 

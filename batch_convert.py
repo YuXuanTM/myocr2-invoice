@@ -14,10 +14,10 @@ import math
 
 from main import img_joint
 from PIL import Image, ImageEnhance
-from main import preprocess_image2
-from main import preprocess_image
-from main import convert_coordinates
-from main import convert_coordinates2
+from main import resize_to_fixed_size
+from main import resize_and_pad_image
+from main import convert_coordinates_restore
+from main import convert_coordinates_zoom
 from paddleocr import PaddleOCR
 # from main import ocr
 from main import __get_img__
@@ -107,7 +107,7 @@ def label(public_info):
     imgs = __get_img__(file_name, file_path)
     for img in imgs:
       img = np.array(img)
-      processed_img, orig_size, new_size, paste_coords, canvas = preprocess_image2(img, 640, 640)
+      processed_img, orig_size, new_size, paste_coords, canvas = resize_to_fixed_size(img, 640, 640)
       enhancer = ImageEnhance.Contrast(canvas)
       # 增强对比度
       image_enhanced = enhancer.enhance(3.0)
@@ -135,7 +135,7 @@ def label(public_info):
         # cv2.rectangle(canvas, (left, top), (right, bottom), color=color, thickness=1, lineType=cv2.LINE_AA)
         caption = f"{label} "
         # box = convert_coordinates([left, top, right, bottom], orig_size, new_size, paste_coords)
-        box = convert_coordinates2([left, top, right, bottom], orig_size, new_size, paste_coords)
+        box = convert_coordinates_zoom([left, top, right, bottom], orig_size, new_size, paste_coords)
         # box = convert_coordinates([left, top, right, bottom], new_size, orig_size, paste_coords)
         # o_left, o_top, o_right, o_bottom = int(box[0]), int(box[1]), int(box[2]), int(box[3])
         o_left, o_top, o_right, o_bottom = box[0], box[1], box[2], box[3]
