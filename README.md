@@ -7,6 +7,9 @@
 #### 软件架构
 RT-DERTv2+PaddleOCR+Flask+easyofd
 
+#### 关于贡献
+欢迎任何人加入对项目增添砖瓦
+
 #### 最新动态
  - 2025.06.19: paddlepaddle 2.6.2=>paddlepaddle 3.0.0、PaddleOCR 2.9=>PaddleOCR 3.0.2、PPOCR-V4=>PPOCR-V5
 #### 安装教程
