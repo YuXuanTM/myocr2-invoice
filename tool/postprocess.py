@@ -24,9 +24,13 @@ def postprocess_invoice_result(result):
         result['title'] = title.replace('铁路电子客票', '（铁路电子客票')
 
     # 时间字段规范化: 15: 06开 -> 15:06开
-    dep_time = result.get('time_of_departure', '')
-    if isinstance(dep_time, str):
-        result['time_of_departure'] = TIME_RE.sub(r'\1:\2', dep_time)
+    if 'time_of_departure' in result and isinstance(result.get('time_of_departure'), str):
+        dep_time = result.get('time_of_departure')
+        cleaned_time = TIME_RE.sub(r'\1:\2', dep_time).strip()
+        if cleaned_time:
+            result['time_of_departure'] = cleaned_time
+        else:
+            result.pop('time_of_departure', None)
 
     # 铁路票经常开票日期和乘车日期同日，issue_date 漏识别时做兜底
     if not result.get('issue_date') and '铁路电子客票' in result.get('title', ''):
