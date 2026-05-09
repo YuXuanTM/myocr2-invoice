@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import time
+import re
 from paddleocr import PaddleOCR
 from paddleocr import TextRecognition
 from tool.public_info import device, text_ocr_type, det_true_list
@@ -33,6 +34,48 @@ def predict(img, lock='rec'):
     else:
         return ocr_rec.predict_iter(img)
 
+
+
+def build_ocr_candidates(img):
+    """生成多种候选图以提升难例识别成功率。"""
+    candidates = [img]
+
+    h, w = img.shape[:2]
+    if min(h, w) < 48:
+        scale = 2.0 if min(h, w) < 32 else 1.5
+        up = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        candidates.append(up)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    denoise = cv2.GaussianBlur(gray, (3, 3), 0)
+    _, binary = cv2.threshold(denoise, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    candidates.append(cv2.cvtColor(binary, cv2.COLOR_GRAY2RGB))
+
+    return candidates
+
+
+def normalize_ocr_text(text):
+    if not text:
+        return ''
+    text = text.strip()
+    text = text.replace('（', '(').replace('）', ')').replace('，', ',').replace('：', ':')
+    text = re.sub(r'\s+', '', text)
+    return text
+
+
+def choose_best_text(pred_lines, rec_text):
+    best_text = ''
+    best_score = -1.0
+    for line in pred_lines or []:
+        if not line:
+            continue
+        raw_text = ''.join(line.get(rec_text, [])) if isinstance(line, dict) else ''
+        score = line.get('rec_score', 0.0) if isinstance(line, dict) else 0.0
+        text = normalize_ocr_text(raw_text)
+        if text and (score > best_score or (score == best_score and len(text) > len(best_text))):
+            best_text = text
+            best_score = score
+    return best_text
 
 def crop_and_preprocess_for_ocr(obj, orig_size, new_size, img, enable_det_list):
     """
@@ -87,6 +130,7 @@ def crop_and_preprocess_for_ocr(obj, orig_size, new_size, img, enable_det_list):
         bordered_img = np.full((cropped_img.shape[0] + 2 * border_size, cropped_img.shape[1] + 2 * border_size, 3), 255,
                                dtype=np.uint8)
         bordered_img[border_size:-border_size, border_size:-border_size] = cropped_img
+        cropped_img = bordered_img
         # cropped_img = cv2.copyMakeBorder(
         #   cropped_img,
         #   top=5, bottom=5, left=5, right=5,
@@ -180,19 +224,19 @@ def text_ocr(det_img, det_label, ocr, ocr_result, rec_text):
 
 
 def text_predict(det_label, di, i, ocr, ocr_result, rec_text):
-    rr = predict(di, ocr)
-    if rr:
-        for index, line in enumerate(rr):
-            if line:
-                ocr_result.setdefault(det_label[i], '')
-                ocr_result[det_label[i]] += ''.join(line[rec_text])
+    best_text = ''
+    for candidate in build_ocr_candidates(di):
+        rr = predict(candidate, ocr)
+        text = choose_best_text(rr, rec_text)
+        if len(text) > len(best_text):
+            best_text = text
+
+    if best_text:
+        ocr_result.setdefault(det_label[i], '')
+        ocr_result[det_label[i]] += best_text
 
 
 def batch_text_ocr(det_img, det_label, ocr, ocr_result, rec_text):
-    # 批量识别
-    rr = predict(det_img, ocr)
-    if rr:
-        for index, line in enumerate(rr):
-            if line:
-                ocr_result.setdefault(det_label[index], '')
-                ocr_result[det_label[index]] += ''.join(line[rec_text])
+    # 增强路径按单图多候选识别，稳定性优先
+    for i, di in enumerate(det_img):
+        text_predict(det_label, di, i, ocr, ocr_result, rec_text)

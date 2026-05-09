@@ -4,6 +4,7 @@ import predict2
 from tool.public_info import types
 from tool.img_utils import resize_to_fixed_size, __get_img__
 from TextOCR import ocr_and_set_value
+from tool.postprocess import postprocess_invoice_result
 from flask import Flask, request
 from PIL import Image, ImageEnhance
 
@@ -37,7 +38,7 @@ def invoice_ocr():
         if item_result_list.__len__() > 0:
             ocr_result['items'] = item_result_list
 
-    return ocr_result
+    return postprocess_invoice_result(ocr_result)
 
 
 if __name__ == "__main__":
