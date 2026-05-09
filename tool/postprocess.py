@@ -24,9 +24,6 @@ def postprocess_invoice_result(result):
         if '铁路电子客票' in title and '（' not in title and '(' not in title:
             # 修复常见漏识别左括号
             result['title'] = title.replace('铁路电子客票', '（铁路电子客票')
-        elif title and '发票' not in title:
-            # 标题未包含“发票”时通常是误识别公司名，直接移除避免脏值
-            result.pop('title', None)
 
     # 时间字段规范化: 15: 06开 -> 15:06开
     if 'time_of_departure' in result and isinstance(result.get('time_of_departure'), str):
