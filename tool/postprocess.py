@@ -3,6 +3,7 @@ import re
 AMOUNT_RE = re.compile(r"^[¥￥]?\s*\d+(?:\.\d{1,2})?$")
 DATE_RE = re.compile(r"\d{4}年\d{2}月\d{2}日")
 TIME_RE = re.compile(r"(\d{1,2})\s*[:：]\s*(\d{2})")
+TIME_VALUE_RE = re.compile(r"^(?:[01]?\d|2[0-3])[:：][0-5]\d(?:\s*开)?$")
 
 
 def _clean_text(v):
@@ -19,15 +20,19 @@ def postprocess_invoice_result(result):
         result[k] = _clean_text(v)
 
     title = result.get('title', '')
-    if '铁路电子客票' in title and '（' not in title and '(' not in title:
-        # 修复常见漏识别左括号
-        result['title'] = title.replace('铁路电子客票', '（铁路电子客票')
+    if isinstance(title, str):
+        if '铁路电子客票' in title and '（' not in title and '(' not in title:
+            # 修复常见漏识别左括号
+            result['title'] = title.replace('铁路电子客票', '（铁路电子客票')
+        elif title and '发票' not in title:
+            # 标题未包含“发票”时通常是误识别公司名，直接移除避免脏值
+            result.pop('title', None)
 
     # 时间字段规范化: 15: 06开 -> 15:06开
     if 'time_of_departure' in result and isinstance(result.get('time_of_departure'), str):
         dep_time = result.get('time_of_departure')
         cleaned_time = TIME_RE.sub(r'\1:\2', dep_time).strip()
-        if cleaned_time:
+        if cleaned_time and TIME_VALUE_RE.match(cleaned_time):
             result['time_of_departure'] = cleaned_time
         else:
             result.pop('time_of_departure', None)
